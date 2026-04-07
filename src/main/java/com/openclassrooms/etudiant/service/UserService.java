@@ -37,9 +37,17 @@ public class UserService {
         Assert.notNull(login, "Login must not be null");
         Assert.notNull(password, "Password must not be null");
         Optional<User> user = userRepository.findByLogin(login);
-        if (user.isPresent() && passwordEncoder.matches(password, password)) {
+        boolean match = user
+                .map(u -> passwordEncoder.matches(password, u.getPassword()))
+                // Forcément, on veut matcher password avec password (non encodé en plus) ça ne peut pas marcher
+                .orElse(false);
+
+        if (user.isPresent() && match) {
             UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
-                    .username(login).build();
+                    .username(login)
+                    .password(user.get().getPassword())     // Attention à ne pas oublier la moitié des
+                    .roles("USER")                          // paramètres obligatoires...
+                    .build();
             return jwtService.generateToken(userDetails);
         } else {
             throw new IllegalArgumentException("Invalid credentials");
