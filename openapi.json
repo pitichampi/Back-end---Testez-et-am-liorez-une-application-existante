@@ -1,0 +1,745 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API de Gestion des Étudiants - Bibliothèque",
+    "description": "API REST complète pour la gestion des étudiants d'une bibliothèque.\n\n**Authentification requise**: Toutes les endpoints excepté `/api/register` et `/api/login` nécessitent un token JWT Bearer.\n\n**Format du token**: \n```\nAuthorization: Bearer <your_jwt_token>\n```",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Support API"
+    },
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Serveur de développement local"
+    },
+    {
+      "url": "https://api.example.com",
+      "description": "Serveur de production"
+    }
+  ],
+  "paths": {
+    "/api/register": {
+      "post": {
+        "tags": ["Authentification"],
+        "summary": "Enregistrer un nouvel utilisateur",
+        "description": "Crée un nouveau compte utilisateur dans le système",
+        "operationId": "registerUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDTO"
+              },
+              "examples": {
+                "example1": {
+                  "value": {
+                    "firstName": "Jean",
+                    "lastName": "Dupont",
+                    "login": "jean.dupont",
+                    "password": "SecurePassword123!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Utilisateur créé avec succès"
+          },
+          "400": {
+            "description": "Données invalides ou manquantes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                },
+                "example": {
+                  "timestamp": "2026-04-09T10:30:00",
+                  "message": "Validation error: firstName should not be blank",
+                  "path": "uri=/api/register"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur interne du serveur",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/login": {
+      "post": {
+        "tags": ["Authentification"],
+        "summary": "Se connecter et obtenir un token JWT",
+        "description": "Authentifie l'utilisateur et retourne un token JWT Bearer",
+        "operationId": "loginUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequestDTO"
+              },
+              "examples": {
+                "example1": {
+                  "value": {
+                    "login": "jean.dupont",
+                    "password": "SecurePassword123!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Connexion réussie, token retourné",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                },
+                "example": {
+                  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                  "type": "Bearer"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Identifiant ou mot de passe invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentification échouée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/students": {
+      "post": {
+        "tags": ["Étudiants (CRUD)"],
+        "summary": "Créer un nouvel étudiant",
+        "description": "Crée un nouvel étudiant dans la base de données. Authentification requise.",
+        "operationId": "createStudent",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentCreateUpdateDTO"
+              },
+              "examples": {
+                "example1": {
+                  "value": {
+                    "firstName": "Marie",
+                    "lastName": "Martin",
+                    "email": "marie.martin@example.com"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Étudiant créé avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentDTO"
+                },
+                "example": {
+                  "id": 1,
+                  "firstName": "Marie",
+                  "lastName": "Martin",
+                  "email": "marie.martin@example.com",
+                  "created_at": "2026-04-09T10:30:00",
+                  "updated_at": "2026-04-09T10:30:00"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Données invalides",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur interne",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Étudiants (CRUD)"],
+        "summary": "Récupérer la liste de tous les étudiants",
+        "description": "Retourne la liste complète de tous les étudiants enregistrés. Authentification requise.",
+        "operationId": "getAllStudents",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des étudiants récupérée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StudentDTO"
+                  }
+                },
+                "example": [
+                  {
+                    "id": 1,
+                    "firstName": "Marie",
+                    "lastName": "Martin",
+                    "email": "marie.martin@example.com",
+                    "created_at": "2026-04-09T10:30:00",
+                    "updated_at": "2026-04-09T10:30:00"
+                  },
+                  {
+                    "id": 2,
+                    "firstName": "Jean",
+                    "lastName": "Dupont",
+                    "email": "jean.dupont@example.com",
+                    "created_at": "2026-04-09T10:35:00",
+                    "updated_at": "2026-04-09T10:35:00"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur interne",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/students/{id}": {
+      "get": {
+        "tags": ["Étudiants (CRUD)"],
+        "summary": "Récupérer les détails d'un étudiant spécifique",
+        "description": "Retourne les informations détaillées d'un étudiant par son ID. Authentification requise.",
+        "operationId": "getStudentById",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identifiant unique de l'étudiant",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Étudiant trouvé et retourné",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentDTO"
+                },
+                "example": {
+                  "id": 1,
+                  "firstName": "Marie",
+                  "lastName": "Martin",
+                  "email": "marie.martin@example.com",
+                  "created_at": "2026-04-09T10:30:00",
+                  "updated_at": "2026-04-09T10:30:00"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Étudiant non trouvé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                },
+                "example": {
+                  "timestamp": "2026-04-09T10:30:00",
+                  "message": "Student not found",
+                  "path": "uri=/api/students/999"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur interne",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Étudiants (CRUD)"],
+        "summary": "Modifier un étudiant",
+        "description": "Met à jour les informations d'un étudiant existant. Authentification requise.",
+        "operationId": "updateStudent",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identifiant unique de l'étudiant",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "example": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentCreateUpdateDTO"
+              },
+              "examples": {
+                "example1": {
+                  "value": {
+                    "firstName": "Marianne",
+                    "lastName": "Martins",
+                    "email": "marianne.martins@example.com"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Étudiant mis à jour avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentDTO"
+                },
+                "example": {
+                  "id": 1,
+                  "firstName": "Marianne",
+                  "lastName": "Martins",
+                  "email": "marianne.martins@example.com",
+                  "created_at": "2026-04-09T10:30:00",
+                  "updated_at": "2026-04-09T10:50:00"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Données invalides",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Étudiant non trouvé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur interne",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Étudiants (CRUD)"],
+        "summary": "Supprimer un étudiant",
+        "description": "Supprime un étudiant de la base de données. Authentification requise.",
+        "operationId": "deleteStudent",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identifiant unique de l'étudiant",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Étudiant supprimé avec succès (pas de contenu retourné)"
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Étudiant non trouvé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur interne",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Entrez le JWT token obtenu via l'endpoint /api/login"
+      }
+    },
+    "schemas": {
+      "StudentDTO": {
+        "type": "object",
+        "description": "Représentation complète d'un étudiant",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identifiant unique de l'étudiant",
+            "example": 1
+          },
+          "firstName": {
+            "type": "string",
+            "description": "Prénom de l'étudiant",
+            "example": "Marie"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Nom de famille de l'étudiant",
+            "example": "Martin"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Adresse email de l'étudiant",
+            "example": "marie.martin@example.com"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date et heure de création de l'enregistrement",
+            "example": "2026-04-09T10:30:00"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date et heure de la dernière modification",
+            "example": "2026-04-09T10:30:00"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "email",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "StudentCreateUpdateDTO": {
+        "type": "object",
+        "description": "Données requises pour créer ou modifier un étudiant",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "description": "Prénom de l'étudiant",
+            "example": "Marie",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Nom de famille de l'étudiant",
+            "example": "Martin",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Adresse email de l'étudiant",
+            "example": "marie.martin@example.com"
+          }
+        },
+        "required": [
+          "firstName",
+          "lastName",
+          "email"
+        ]
+      },
+      "RegisterDTO": {
+        "type": "object",
+        "description": "Données d'enregistrement d'un nouvel utilisateur",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "description": "Prénom de l'utilisateur",
+            "example": "Jean",
+            "minLength": 1
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Nom de famille de l'utilisateur",
+            "example": "Dupont",
+            "minLength": 1
+          },
+          "login": {
+            "type": "string",
+            "description": "Identifiant de connexion (username)",
+            "example": "jean.dupont",
+            "minLength": 1
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "description": "Mot de passe (sera hashé avant stockage)",
+            "example": "SecurePassword123!",
+            "minLength": 8
+          }
+        },
+        "required": [
+          "firstName",
+          "lastName",
+          "login",
+          "password"
+        ]
+      },
+      "LoginRequestDTO": {
+        "type": "object",
+        "description": "Identifiants pour la connexion",
+        "properties": {
+          "login": {
+            "type": "string",
+            "description": "Identifiant de connexion (username)",
+            "example": "jean.dupont"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "description": "Mot de passe",
+            "example": "SecurePassword123!"
+          }
+        },
+        "required": [
+          "login",
+          "password"
+        ]
+      },
+      "AuthResponse": {
+        "type": "object",
+        "description": "Réponse d'authentification contenant le token JWT",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Token JWT Bearer à utiliser pour les requêtes authentifiées",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type d'authentification",
+            "example": "Bearer",
+            "enum": [
+              "Bearer"
+            ]
+          }
+        },
+        "required": [
+          "token",
+          "type"
+        ]
+      },
+      "ErrorDetails": {
+        "type": "object",
+        "description": "Structure de réponse d'erreur standardisée",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date et heure de l'erreur",
+            "example": "2026-04-09T10:30:00"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message d'erreur explicite",
+            "example": "Student not found"
+          },
+          "path": {
+            "type": "string",
+            "description": "Chemin de la requête qui a causé l'erreur",
+            "example": "uri=/api/students/999"
+          }
+        },
+        "required": [
+          "timestamp",
+          "message",
+          "path"
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Authentification",
+      "description": "Endpoints d'authentification et d'enregistrement"
+    },
+    {
+      "name": "Étudiants (CRUD)",
+      "description": "Opérations CRUD complètes pour gérer les étudiants"
+    }
+  ]
+}
+
